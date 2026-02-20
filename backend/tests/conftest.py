@@ -11,6 +11,19 @@ from vector_store import SearchResults
 
 
 @pytest.fixture
+def mock_rag_system():
+    """Fully-mocked RAGSystem for use in API and integration tests."""
+    rag = MagicMock()
+    rag.query.return_value = ("Test answer", ["source1"])
+    rag.session_manager.create_session.return_value = "generated-session-id"
+    rag.get_course_analytics.return_value = {
+        "total_courses": 2,
+        "course_titles": ["Course A", "Course B"],
+    }
+    return rag
+
+
+@pytest.fixture
 def sample_search_results():
     """A valid SearchResults object with 2 documents."""
     return SearchResults(
