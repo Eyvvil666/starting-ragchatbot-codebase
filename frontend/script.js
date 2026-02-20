@@ -19,7 +19,31 @@ document.addEventListener('DOMContentLoaded', () => {
   setupEventListeners();
   createNewSession();
   loadCourseStats();
+  initTheme();
 });
+
+// Theme Management
+function initTheme() {
+    // Theme attribute is already set by the inline <head> script to prevent FOUC.
+    // Here we just wire up the toggle button's aria-label to match current state.
+    updateToggleLabel();
+}
+
+function toggleTheme() {
+    const current = document.documentElement.getAttribute('data-theme') || 'dark';
+    const next = current === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    localStorage.setItem('theme', next);
+    updateToggleLabel();
+}
+
+function updateToggleLabel() {
+    const btn = document.getElementById('themeToggle');
+    if (!btn) return;
+    const isDark = (document.documentElement.getAttribute('data-theme') || 'dark') === 'dark';
+    btn.setAttribute('aria-label', isDark ? 'Switch to light mode' : 'Switch to dark mode');
+    btn.setAttribute('title', isDark ? 'Switch to light mode' : 'Switch to dark mode');
+}
 
 // Event Listeners
 function setupEventListeners() {
@@ -29,6 +53,7 @@ function setupEventListeners() {
     if (e.key === 'Enter') sendMessage();
   });
 
+  document.getElementById('themeToggle').addEventListener('click', toggleTheme);
   document.getElementById('newChatButton').addEventListener('click', startNewChat);
 
   // Suggested questions
