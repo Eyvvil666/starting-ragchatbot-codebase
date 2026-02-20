@@ -90,11 +90,10 @@ class VectorStore:
         search_limit = limit if limit is not None else self.max_results
         
         try:
-            results = self.course_content.query(
-                query_texts=[query],
-                n_results=search_limit,
-                where=filter_dict
-            )
+            query_kwargs = {"query_texts": [query], "n_results": search_limit}
+            if filter_dict is not None:
+                query_kwargs["where"] = filter_dict
+            results = self.course_content.query(**query_kwargs)
             return SearchResults.from_chroma(results)
         except Exception as e:
             return SearchResults.empty(f"Search error: {str(e)}")
@@ -123,14 +122,14 @@ class VectorStore:
         # Handle different filter combinations
         if course_title and lesson_number is not None:
             return {"$and": [
-                {"course_title": course_title},
-                {"lesson_number": lesson_number}
+                {"course_title": {"$eq": course_title}},
+                {"lesson_number": {"$eq": lesson_number}}
             ]}
-        
+
         if course_title:
-            return {"course_title": course_title}
-            
-        return {"lesson_number": lesson_number}
+            return {"course_title": {"$eq": course_title}}
+
+        return {"lesson_number": {"$eq": lesson_number}}
     
     def add_course_metadata(self, course: Course):
         """Add course information to the catalog for semantic search"""
@@ -167,8 +166,8 @@ class VectorStore:
         documents = [chunk.content for chunk in chunks]
         metadatas = [{
             "course_title": chunk.course_title,
-            "lesson_number": chunk.lesson_number,
-            "chunk_index": chunk.chunk_index
+            "chunk_index": chunk.chunk_index,
+            **({"lesson_number": chunk.lesson_number} if chunk.lesson_number is not None else {})
         } for chunk in chunks]
         # Use title with chunk index for unique IDs
         ids = [f"{chunk.course_title.replace(' ', '_')}_{chunk.chunk_index}" for chunk in chunks]
